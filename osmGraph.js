@@ -167,7 +167,7 @@ async function fetchRoadGraph() {
 const LANDMARKS = [
     // ── New Town / Action Area III ────────────────────────────────────────
     {
-        name: 'IEM Newtown',
+        name: 'IEM Salt Lake',
         searchName: 'Institute of Engineering & Management',
         lat: 22.5776, lon: 88.4625
     },
@@ -175,11 +175,6 @@ const LANDMARKS = [
         name: 'St. Xaviers University',
         searchName: "St. Xavier's University",
         lat: 22.5789, lon: 88.4608
-    },
-    {
-        name: 'UEM Newtown',
-        searchName: 'University of Engineering and Management',
-        lat: 22.5759, lon: 88.4620
     },
     {
         name: 'WB Judicial Academy',

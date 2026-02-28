@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const { loadOSMGraph, findNearestAccessibleNode } = require('./osmGraph');
 const { findRoutes } = require('./amcrRouter');
+const { enrichRoute } = require('./routeLookup');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -67,15 +68,21 @@ app.post('/api/path', (req, res) => {
 
     const fmt = r => ({
         latLngs: r.latLngs,
-        distanceMetres: r.distMetres,
+        distanceMetres: r.distanceMetres,
         estTimeMin: r.estTimeMin,
         totalCost: parseFloat(r.totalCost.toFixed(2)),
         qualityBreakdown: r.qualityBreakdown,
         typeBreakdown: r.typeBreakdown,
-        roadSamples: r.roadSamples
+        roadSamples: r.roadSamples,
+        trafficLevel: r.trafficLevel || null,
+        shadeOverall: r.shadeOverall ?? null,
+        smoothRoad: r.smoothRoad ?? null,
+        fastestRoute: r.fastestRoute ?? null
     });
 
-    res.json({ success: true, main: fmt(main), alternatives: alternatives.map(fmt) });
+    // Enrich main + alternatives with dataset values (falls back if pair not found)
+    const enrich = r => enrichRoute(r, source, destination);
+    res.json({ success: true, main: fmt(enrich(main)), alternatives: alternatives.map(r => fmt(enrich(r))) });
 });
 
 app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));

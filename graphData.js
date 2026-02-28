@@ -21,7 +21,7 @@ const nodes = [
     { id: 'Panchuria Rd', x: 0.160, y: 0.770, isLandmark: true },
     { id: 'Heria Kalyan Rd', x: 0.430, y: 0.640, isLandmark: true },
 
-    // --- FAKE NODES (Invisible routing junctions to bend paths along real-world streets) ---
+
     { id: 'Junction A', x: 0.400, y: 0.320, isLandmark: false },
     { id: 'Junction B', x: 0.650, y: 0.600, isLandmark: false },
     { id: 'Junction C', x: 0.200, y: 0.500, isLandmark: false },

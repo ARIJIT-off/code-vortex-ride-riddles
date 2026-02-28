@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             renderSummary(data.main, 'Main Route');
             renderQuality(data.main.qualityBreakdown);
-            renderPathType(data.main.typeBreakdown, data.main.roadSamples);
+            renderPathType(data.main.typeBreakdown, data.main.roadSamples, data.main.trafficLevel);
             renderAlternatives(data.alternatives || []);
 
             if (window.MapRenderer) {
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             renderSummary(route, label);
             renderQuality(route.qualityBreakdown);
-            renderPathType(route.typeBreakdown, route.roadSamples);
+            renderPathType(route.typeBreakdown, route.roadSamples, route.trafficLevel);
         };
         return btn;
     }
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'narrow alley': { label: 'Narrow Alley', cls: 'narrow' },
     };
 
-    function renderPathType(tb, samples) {
+    function renderPathType(tb, samples, serverTrafficLevel) {
         if (!tb) return;
 
         pathtypeRows.innerHTML = '';
@@ -253,9 +253,19 @@ document.addEventListener('DOMContentLoaded', () => {
             pathtypeRows.appendChild(row);
         }
 
-        // Traffic
-        const nowHour = new Date().getHours(); // real local hour
-        const traffic = computeTraffic(tb, nowHour);
+        // Traffic — prefer server dataset value, fall back to time-based model
+        let traffic;
+        if (serverTrafficLevel) {
+            const MAP = {
+                'Low': { label: 'LOW', cls: 'traf-low' },
+                'Medium': { label: 'MEDIUM', cls: 'traf-medium' },
+                'High': { label: 'HIGH', cls: 'traf-high' }
+            };
+            traffic = MAP[serverTrafficLevel] || computeTraffic(tb, new Date().getHours());
+        } else {
+            const nowHour = new Date().getHours();
+            traffic = computeTraffic(tb, nowHour);
+        }
         trafficBadge.textContent = traffic.label;
         trafficBadge.className = 'traffic-badge ' + traffic.cls;
 
