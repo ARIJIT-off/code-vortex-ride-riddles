@@ -1,37 +1,65 @@
-// Graph nodes
+// Real-world Graph nodes based on Action Area 3 (Kolkata)
+// Center: 88.4527 E, 22.5816 N. Zoom: 13. Image: 650x450
 const nodes = [
-    { id: 'A', x: 0.15, y: 0.2 },
-    { id: 'B', x: 0.85, y: 0.15 },
-    { id: 'C', x: 0.1, y: 0.8 },
-    { id: 'D', x: 0.5, y: 0.5 },
-    { id: 'E', x: 0.9, y: 0.7 },
-    { id: 'F', x: 0.45, y: 0.9 }
+    // --- MAIN LANDMARKS (X/Y Coordinates precisely mapped to your screenshot snippet) ---
+    { id: 'IEM Newtown', x: 0.355, y: 0.145, isLandmark: true },
+    { id: 'Downtown Mall', x: 0.560, y: 0.280, isLandmark: true },
+    { id: 'St Xaviers', x: 0.250, y: 0.120, isLandmark: true },
+    { id: 'IIT Kharagpur', x: 0.585, y: 0.455, isLandmark: true },
+    { id: 'Judicial Academy', x: 0.480, y: 0.475, isLandmark: true },
+    { id: 'Wetland', x: 0.930, y: 0.485, isLandmark: true },
+    { id: 'Kulberia Mandir', x: 0.530, y: 0.860, isLandmark: true },
+    { id: 'Shani Mandir', x: 0.090, y: 0.540, isLandmark: true },
+
+    // --- 8 NEW DISTANT LANDMARK NODES ---
+    { id: 'Eco Park Gate', x: 0.820, y: 0.065, isLandmark: true },
+    { id: 'Biswa Bangla Gate', x: 0.780, y: 0.185, isLandmark: true },
+    { id: 'Canal Bank Rd', x: 0.870, y: 0.300, isLandmark: true },
+    { id: 'Rosedale Plaza', x: 0.400, y: 0.040, isLandmark: true },
+    { id: 'Jagannath Temple', x: 0.430, y: 0.370, isLandmark: true },
+    { id: 'Dharmatala Mandir', x: 0.290, y: 0.700, isLandmark: true },
+    { id: 'Panchuria Rd', x: 0.160, y: 0.770, isLandmark: true },
+    { id: 'Heria Kalyan Rd', x: 0.430, y: 0.640, isLandmark: true },
+
+    // --- FAKE NODES (Invisible routing junctions to bend paths along real-world streets) ---
+    { id: 'Junction A', x: 0.400, y: 0.320, isLandmark: false },
+    { id: 'Junction B', x: 0.650, y: 0.600, isLandmark: false },
+    { id: 'Junction C', x: 0.200, y: 0.500, isLandmark: false },
+    { id: 'Junction D', x: 0.750, y: 0.300, isLandmark: false },
+    { id: 'Junction E', x: 0.600, y: 0.130, isLandmark: false },
+    { id: 'Junction F', x: 0.840, y: 0.400, isLandmark: false },
+    { id: 'Junction G', x: 0.320, y: 0.620, isLandmark: false },
+    { id: 'Junction H', x: 0.500, y: 0.750, isLandmark: false }
 ];
 
-// Generate 120 deterministic edges
+// Generate deterministic edges for every node pair × every mode
 function generateEdges() {
     const edges = [];
-    const types = ['4-lane', '2-lane', 'one way', 'narrow alley'];
-    const featuresList = ['none', 'petrol pump', 'EV station'];
+    const modes = ['foot', 'ev', '4-wheeler', '2-wheeler'];
     const nodeIds = nodes.map(n => n.id);
 
-    // We create exactly 120 edges (20 per node pair on average, multiple alternative routes)
+    // 4 edges per ordered pair (one per mode).
+    // With 20 nodes: 20*19 = 380 pairs → 380*4 = 1520 edges total.
     let edgeId = 1;
     for (let i = 0; i < nodeIds.length; i++) {
         for (let j = 0; j < nodeIds.length; j++) {
             if (i === j) continue;
 
-            // Generate 4 edges between every pair (6*5 = 30 pairs. 30 * 4 = 120 edges)
-            for (let k = 0; k < 4; k++) {
-                const type = types[(i + j + k) % types.length];
-                const feature = featuresList[(i * j + k) % featuresList.length];
+            modes.forEach((mode, mIdx) => {
+                const typeIndex = (mIdx + i + j) % 4;
 
-                // Base distance from 10 to 100 cm
-                const baseDistance = 10 + ((i * 7 + j * 13 + k * 17) % 91);
+                let type = '2-lane';
+                if (typeIndex === 0) type = '4-lane';
+                else if (typeIndex === 1) type = '2-lane';
+                else if (typeIndex === 2) type = 'one way';
+                else if (typeIndex === 3) type = 'narrow alley';
 
-                // Add control points for drawing curved lines (bezier offset)
-                // -0.3 to 0.3 offset
-                const cpOffset = ((k * 31) % 60 - 30) / 100;
+                // Distance base
+                const baseDistance = 10 + ((i * 7 + j * 13 + mIdx * 17) % 91);
+
+                // Seed geometry distinctly for every permutation
+                const seed = i * 1000 + j * 100 + mIdx * 7;
+                const waypoints = generateCityBlockWaypoints(nodes[i], nodes[j], seed);
 
                 edges.push({
                     id: `e${edgeId++}`,
@@ -39,13 +67,53 @@ function generateEdges() {
                     target: nodeIds[j],
                     distance: baseDistance,
                     type: type,
-                    feature: feature,
-                    cpOffset: cpOffset // used for rendering curves so lines don't overlap completely
+                    feature: 'none',
+                    waypoints: waypoints,
+                    intendedMode: mode,      // Used to guarantee unique route
+                    intendedPref: 'shortest' // Baseline pref so we don't multiply by 3
                 });
-            }
+            });
         }
     }
     return edges;
+}
+
+// Generate organic but rectilinear waypoints between two nodes
+function generateCityBlockWaypoints(nodeA, nodeB, seed) {
+    const points = [];
+    let cx = nodeA.x;
+    let cy = nodeA.y;
+    const tx = nodeB.x;
+    const ty = nodeB.y;
+
+    // Divide path into 2-4 segments based on distance
+    const dx = tx - cx;
+    const dy = ty - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Tighter segments since nodes are closer together on a real map
+    const segments = Math.max(2, Math.floor(dist * 20) + (seed % 3));
+
+    for (let s = 0; s < segments - 1; s++) {
+        const remainingSegments = segments - 1 - s;
+
+        let stepX = (tx - cx) / remainingSegments;
+        let stepY = (ty - cy) / remainingSegments;
+
+        // Much tighter orthogonal randomness so paths look like adjacent streets, not wild spaghetti
+        const orthoDrift = ((seed * (s + 1) * 31) % 100 - 50) / 100 * 0.02; // -0.01 to +0.01
+
+        if ((seed + s) % 2 === 0) {
+            cx += stepX;
+            cy += stepY + orthoDrift;
+        } else {
+            cx += stepX + orthoDrift;
+            cy += stepY;
+        }
+
+        points.push({ x: cx, y: cy });
+    }
+    return points;
 }
 
 const edges = generateEdges();
@@ -53,41 +121,28 @@ const edges = generateEdges();
 // Dynamic weighting logic
 // User parameters: mode (foot, ev, 4-wheeler, 2-wheeler), preference (smooth, shaded, shortest)
 function calculateDynamicWeight(edge, mode, preference) {
-    let weight = edge.distance; // base weight is distance
-
-    // Adjust based on node mode
-    if (mode === '4-wheeler') {
-        if (edge.type === 'narrow alley') weight *= 10; // penalty
-        if (edge.type === '4-lane') weight *= 0.8; // bonus
-    } else if (mode === 'ev') {
-        if (edge.feature === 'EV station') weight *= 0.5; // huge bonus
-        if (edge.type === 'narrow alley') weight *= 5;
-    } else if (mode === 'foot') {
-        if (edge.type === '4-lane') weight *= 3; // dangerous for foot
-        if (edge.type === 'narrow alley') weight *= 0.7; // shortcut
-    } else if (mode === '2-wheeler') {
-        if (edge.type === 'narrow alley') weight *= 0.9;
+    // 1. Strict Logical Constraints mapped from UI configuration
+    if (mode === '4-wheeler' && (edge.type === 'narrow alley' || edge.type === 'one way')) {
+        return Infinity; // Hard blocked for 4-wheelers on these road types
     }
 
-    // Adjust based on preference
-    if (preference === 'smooth') {
-        if (edge.type === '4-lane' || edge.type === '2-lane') weight *= 0.8;
-        if (edge.type === 'narrow alley') weight *= 2.0;
-    } else if (preference === 'shaded') {
-        if (edge.type === 'narrow alley') weight *= 0.7; // assuming shaded
-        if (edge.type === '4-lane') weight *= 1.5; // exposed
-    } else if (preference === 'shortest') {
-        // purely relies on distance, minimal modifier
-        weight *= 1.0;
+    // 2. Base weight
+    let weight = edge.distance;
+
+    // 3. Affinity matching: 
+    // We generated 4 edges between each node (one for each main mode).
+    // Penalize heavily if the vehicle takes a road not designed for it
+    if (edge.intendedMode === mode) {
+        weight *= 0.5;
+    } else {
+        weight *= 5.0;
     }
 
-    // Safety check for one way
-    // For simplicity, generateEdges sets target/source explicitly. 
-    // If it's one-way, it's already directional in our datastructure.
-    // If mode is foot, they can walk down one-ways against traffic, but vehicles cannot.
-    // In our algorithm, edges are directional. We don't add reverse edges automatically.
+    // Apply feature/preference multipliers 
+    if (preference === 'smooth' && edge.type !== '4-lane' && edge.type !== '2-lane') weight *= 2;
+    if (preference === 'shaded' && edge.type !== 'narrow alley') weight *= 1.5;
 
-    return Math.max(0.1, weight); // ensure weight is positive
+    return Math.max(0.0001, weight);
 }
 
 module.exports = {

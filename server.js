@@ -1,7 +1,9 @@
+'use strict';
+
 const express = require('express');
 const cors = require('cors');
-const { nodes, edges } = require('./graphData');
-const { findShortestPath } = require('./dijkstra');
+const { loadOSMGraph, findNearestAccessibleNode } = require('./osmGraph');
+const { findRoutes } = require('./amcrRouter');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,34 +12,70 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Mock Arduino Start API
-app.post('/api/start-car', (req, res) => {
-    console.log('Arduino Car Start Command Received!');
-    res.json({ success: true, message: 'Car started!' });
-});
+let GRAPH = null;
 
-// Provides static graph data (nodes, base edges) to frontend for rendering
+(async () => {
+    GRAPH = await loadOSMGraph();
+    console.log(`🚀 RIDE_RIDDLES ready → http://localhost:${PORT}`);
+    console.log(`   Graph: ${GRAPH.nodes.size} OSM nodes | ${GRAPH.landmarks.length} landmarks`);
+})();
+
+// Helper: landmark name → graph node ID, mode-aware
+// Snaps to nearest OSM node that the given transport mode can actually leave from.
+function resolveNodeForMode(name, mode) {
+    if (!GRAPH) return null;
+    const lm = GRAPH.landmarks.find(l => l.name === name);
+    if (!lm) return null;
+    // Mode-aware snap: finds nearest node with at least one traversable edge
+    return findNearestAccessibleNode(lm.lat, lm.lon, GRAPH.adj, GRAPH.nodes, mode);
+}
+
+
+// ── GET /api/graph — landmark pins for the Leaflet map ────────────────────
 app.get('/api/graph', (req, res) => {
-    res.json({ nodes, edges });
+    if (!GRAPH) return res.status(503).json({ error: 'Graph not ready yet, retry in a moment.' });
+    res.json({
+        landmarks: GRAPH.landmarks.map(lm => ({
+            name: lm.name,
+            lat: lm.lat,
+            lon: lm.lon
+        }))
+    });
 });
 
-// Computes the shortest path based on inputs
+// ── POST /api/path — Bidirectional A*, return top-3 diverse routes ─────────
 app.post('/api/path', (req, res) => {
+    if (!GRAPH) return res.status(503).json({ success: false, error: 'Graph still loading, please retry.' });
+
     const { source, destination, mode, preference } = req.body;
-
-    if (!source || !destination || !mode || !preference) {
+    if (!source || !destination || !mode || !preference)
         return res.status(400).json({ success: false, error: 'Missing parameters' });
-    }
+    if (source === destination)
+        return res.status(400).json({ success: false, error: 'Source and destination must differ' });
 
-    const result = findShortestPath(source, destination, mode, preference);
+    const startId = resolveNodeForMode(source, mode);
+    const goalId = resolveNodeForMode(destination, mode);
+    if (!startId || !goalId)
+        return res.status(404).json({ success: false, error: `Landmark not found: ${!startId ? source : destination}` });
 
-    if (result) {
-        res.json({ success: true, ...result });
-    } else {
-        res.json({ success: false, error: 'No path found' });
-    }
+    const routes = findRoutes(startId, goalId, GRAPH.adj, GRAPH.nodes, mode, preference, GRAPH.haversine);
+
+    if (!routes || routes.length === 0)
+        return res.json({ success: false, error: 'No valid path found for this combination.' });
+
+    const [main, ...alternatives] = routes;
+
+    const fmt = r => ({
+        latLngs: r.latLngs,
+        distanceMetres: r.distMetres,
+        estTimeMin: r.estTimeMin,
+        totalCost: parseFloat(r.totalCost.toFixed(2)),
+        qualityBreakdown: r.qualityBreakdown,
+        typeBreakdown: r.typeBreakdown,
+        roadSamples: r.roadSamples
+    });
+
+    res.json({ success: true, main: fmt(main), alternatives: alternatives.map(fmt) });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));

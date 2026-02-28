@@ -1,14 +1,12 @@
 const { nodes, edges, calculateDynamicWeight } = require('./graphData');
 
 // Dijkstra algorithm to find the shortest path based on dynamic weights
-function findShortestPath(sourceId, targetId, mode, preference) {
-    // 1. Calculate weights for all edges based on current combo
+function findPathExcluding(sourceId, targetId, mode, preference, blockedEdgeIds = []) {
     const weightedEdges = edges.map(e => ({
         ...e,
-        weight: calculateDynamicWeight(e, mode, preference)
+        weight: blockedEdgeIds.includes(e.id) ? Infinity : calculateDynamicWeight(e, mode, preference)
     }));
 
-    // 2. Initialize distances and predecessors
     const distances = {};
     const predecessors = {};
     const unvisited = new Set();
@@ -23,9 +21,7 @@ function findShortestPath(sourceId, targetId, mode, preference) {
 
     distances[sourceId] = 0;
 
-    // 3. Main loop
     while (unvisited.size > 0) {
-        // Find node with minimum distance
         let current = null;
         let minDistance = Infinity;
         for (const nodeId of unvisited) {
@@ -36,35 +32,33 @@ function findShortestPath(sourceId, targetId, mode, preference) {
         }
 
         if (current === null || current === targetId) {
-            break; // Target reached or disconnected
+            break;
         }
 
         unvisited.delete(current);
 
-        // Relax neighbors
-        // We only consider edges where 'source' is the current node
         const neighbors = weightedEdges.filter(e => e.source === current);
 
         for (const edge of neighbors) {
             const neighborId = edge.target;
             if (!unvisited.has(neighborId)) continue;
+            if (edge.weight === Infinity) continue; // skip explicitly blocked
 
             const newDistance = distances[current] + edge.weight;
             if (newDistance < distances[neighborId]) {
                 distances[neighborId] = newDistance;
                 predecessors[neighborId] = current;
-                edgeToPredecessor[neighborId] = edge; // Keep track of which edge we took
+                edgeToPredecessor[neighborId] = edge;
             }
         }
     }
 
-    // 4. Backtrack to find path
     const path = [];
     const detailedPath = [];
     let currNode = targetId;
 
     if (distances[targetId] === Infinity) {
-        return null; // No path found
+        return null;
     }
 
     while (currNode !== null) {
@@ -80,6 +74,43 @@ function findShortestPath(sourceId, targetId, mode, preference) {
         path,
         detailedPath,
         totalCost: distances[targetId]
+    };
+}
+
+function findShortestPath(sourceId, targetId, mode, preference) {
+    // 1. Get Main Route
+    const main = findPathExcluding(sourceId, targetId, mode, preference, []);
+
+    if (!main) return null;
+
+    const alternatives = [];
+
+    // 2. Get Alternative 1 (Block first edge of main path)
+    let alt1 = null;
+    let blockedForAlt1 = [];
+    if (main.detailedPath.length > 0) {
+        blockedForAlt1.push(main.detailedPath[0].id);
+        alt1 = findPathExcluding(sourceId, targetId, mode, preference, blockedForAlt1);
+    }
+
+    // 3. Get Alternative 2 (Block first edge of alt1, or second edge of main)
+    let alt2 = null;
+    if (alt1 && alt1.detailedPath.length > 0) {
+        let blockedForAlt2 = [...blockedForAlt1, alt1.detailedPath[0].id];
+        alt2 = findPathExcluding(sourceId, targetId, mode, preference, blockedForAlt2);
+    }
+
+    if (alt1) alternatives.push(alt1);
+    // Ignore alt2 if it is an exact duplicate (sometimes routing falls back to identical path if block didn't change downstream)
+    if (alt2 && (!alt1 || alt2.detailedPath.map(e => e.id).join(',') !== alt1.detailedPath.map(e => e.id).join(','))) {
+        alternatives.push(alt2);
+    }
+
+    return {
+        path: main.path,
+        detailedPath: main.detailedPath,
+        totalCost: main.totalCost,
+        alternatives
     };
 }
 

@@ -1,87 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RIDE_RIDDLES Hackathon App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <title>RIDE_RIDDLES — Smart Navigation · New Town</title>
+    <meta name="description" content="Real-world adaptive routing for Action Area III, New Town, Kolkata.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <div class="app-container">
-        <aside class="sidebar">
-            <h1>RIDE_RIDDLES</h1>
-            <p class="subtitle">Hackathon Challenge App</p>
-            
-            <div class="control-group">
-                <label for="source">Source Node</label>
-                <select id="source">
-                    <option value="A">Node A</option>
-                    <option value="B">Node B</option>
-                    <option value="C">Node C</option>
-                    <option value="D">Node D</option>
-                    <option value="E">Node E</option>
-                    <option value="F">Node F</option>
-                </select>
-            </div>
 
-            <div class="control-group">
-                <label for="destination">Destination Node</label>
-                <select id="destination">
-                    <option value="A">Node A</option>
-                    <option value="B">Node B</option>
-                    <option value="C">Node C</option>
-                    <option value="D" selected>Node D</option>
-                    <option value="E">Node E</option>
-                    <option value="F">Node F</option>
-                </select>
-            </div>
+    <!-- ── Top Bar ───────────────────────────────────────────────────────────── -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <span class="brand-icon">🗺</span>
+            <span class="brand-name">RIDE<span class="brand-accent">_RIDDLES</span></span>
+        </div>
+        <div class="topbar-meta">
+            <span class="meta-chip">Action Area III · New Town, Kolkata</span>
+        </div>
+    </header>
 
-            <div class="control-group">
-                <label for="mode">Transportation Mode</label>
-                <select id="mode">
-                    <option value="foot">On Foot</option>
-                    <option value="ev">EV</option>
-                    <option value="4-wheeler">4-Wheeler</option>
-                    <option value="2-wheeler">2-Wheeler</option>
-                </select>
-            </div>
+    <main class="map-stage">
+        <!-- Leaflet full-screen map -->
+        <div id="map"></div>
 
-            <div class="control-group">
-                <label for="preference">Path Preference</label>
-                <select id="preference">
-                    <option value="smooth">Smooth Roads</option>
-                    <option value="shaded">Shaded Path</option>
-                    <option value="shortest">Pure Time (Shortest)</option>
-                </select>
-            </div>
-            
-            <div class="action-buttons">
-                <button id="find-path-btn" class="btn primary">Show Route</button>
-                <button id="start-car-btn" class="btn accent">Start Arduino Car</button>
-            </div>
+        <!-- ── Search Card (top-left) ──────────────────────────────────────── -->
+        <div class="float-card search-card" id="search-card">
+            <div class="card-title">Plan Route</div>
 
-            <div class="status-panel">
-                <h3>Route Status</h3>
-                <p id="status-text">Select parameters and find the path.</p>
-                <div class="legend">
-                    <div class="legend-item"><span class="color-box red"></span> 4-Lane</div>
-                    <div class="legend-item"><span class="color-box blue"></span> 2-Lane</div>
-                    <div class="legend-item"><span class="color-box pink"></span> One Way</div>
-                    <div class="legend-item"><span class="color-box cyber-pink"></span> Narrow Alley</div>
+            <div class="field-group">
+                <label for="source">From</label>
+                <div class="select-wrap">
+                    <select id="source">
+                        <optgroup label="── New Town / Action Area III ──">
+                            <option value="IEM Newtown">IEM Newtown</option>
+                            <option value="St. Xaviers University">St. Xavier's University</option>
+                            <option value="UEM Newtown">UEM Newtown</option>
+                            <option value="WB Judicial Academy">WB Judicial Academy</option>
+                            <option value="NKDA Office">NKDA Office</option>
+                            <option value="Hidco Bhaban">Hidco Bhaban</option>
+                        </optgroup>
+                        <optgroup label="── Eco Park / Action Area II ──">
+                            <option value="Eco Park">Eco Park</option>
+                            <option value="Biswa Bangla Gate">Biswa Bangla Gate</option>
+                            <option value="City Centre 2">City Centre 2</option>
+                            <option value="Rosedale Garden">Rosedale Garden</option>
+                        </optgroup>
+                        <optgroup label="── Salt Lake / Sector V ──">
+                            <option value="City Centre 1">City Centre 1</option>
+                            <option value="Salt Lake Stadium">Salt Lake Stadium</option>
+                            <option value="Sector V">Sector V</option>
+                        </optgroup>
+                        <optgroup label="── Central Kolkata ──">
+                            <option value="Howrah Bridge">Howrah Bridge</option>
+                            <option value="Victoria Memorial">Victoria Memorial</option>
+                            <option value="Park Street">Park Street</option>
+                        </optgroup>
+                    </select>
                 </div>
             </div>
-        </aside>
 
-        <main class="map-view">
-            <!-- Container locking aspect ratio to A0 (1:1.414) -->
-            <div class="map-container">
-                <canvas id="map-canvas"></canvas>
+            <!-- Swap button -->
+            <button id="swap-btn" class="swap-btn" title="Swap source and destination">⇅</button>
+
+            <div class="field-group">
+                <label for="destination">To</label>
+                <div class="select-wrap">
+                    <select id="destination">
+                        <optgroup label="── New Town / Action Area III ──">
+                            <option value="IEM Newtown">IEM Newtown</option>
+                            <option value="St. Xaviers University">St. Xavier's University</option>
+                            <option value="UEM Newtown">UEM Newtown</option>
+                            <option value="WB Judicial Academy">WB Judicial Academy</option>
+                            <option value="NKDA Office">NKDA Office</option>
+                            <option value="Hidco Bhaban">Hidco Bhaban</option>
+                        </optgroup>
+                        <optgroup label="── Eco Park / Action Area II ──">
+                            <option value="Eco Park">Eco Park</option>
+                            <option value="Biswa Bangla Gate">Biswa Bangla Gate</option>
+                            <option value="City Centre 2">City Centre 2</option>
+                            <option value="Rosedale Garden">Rosedale Garden</option>
+                        </optgroup>
+                        <optgroup label="── Salt Lake / Sector V ──">
+                            <option value="City Centre 1">City Centre 1</option>
+                            <option value="Salt Lake Stadium">Salt Lake Stadium</option>
+                            <option value="Sector V">Sector V</option>
+                        </optgroup>
+                        <optgroup label="── Central Kolkata ──">
+                            <option value="Howrah Bridge">Howrah Bridge</option>
+                            <option value="Victoria Memorial">Victoria Memorial</option>
+                            <option value="Park Street">Park Street</option>
+                        </optgroup>
+                    </select>
+                </div>
             </div>
-        </main>
-    </div>
 
-    <script src="app.js"></script>
+            <div class="field-row">
+                <div class="field-group half">
+                    <label for="mode">Mode</label>
+                    <div class="select-wrap">
+                        <select id="mode">
+                            <option value="foot">🚶 Walk</option>
+                            <option value="ev">⚡ EV</option>
+                            <option value="4-wheeler">🚗 Car</option>
+                            <option value="2-wheeler">🏍 Bike</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field-group half">
+                    <label for="preference">Prefer</label>
+                    <div class="select-wrap">
+                        <select id="preference">
+                            <option value="smooth">🛣 Smooth</option>
+                            <option value="shaded">🌿 Shaded</option>
+                            <option value="shortest">⚡ Fastest</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button id="find-path-btn" class="btn-primary" id="find-route-btn">
+                <span class="btn-icon">🔍</span> Find Route
+            </button>
+        </div>
+
+        <!-- ── PATH TYPE Card (below search card) ─────────────────────────── -->
+        <div class="float-card pathtype-card" id="pathtype-card" style="display:none;">
+            <div class="pathtype-header">
+                <span class="pathtype-icon">🛣</span>
+                <span class="pathtype-title">PATH TYPE</span>
+            </div>
+            <div class="pathtype-rows" id="pathtype-rows"></div>
+            <div class="pathtype-traffic" id="pathtype-traffic">
+                <span class="traffic-label">TRAFFIC</span>
+                <span class="traffic-badge" id="traffic-badge">—</span>
+            </div>
+        </div>
+
+        <!-- ── Route Summary Card (bottom-center) ──────────────────────────── -->
+        <div class="float-card summary-card" id="summary-card" style="display:none;">
+            <div class="summary-title">Route Summary</div>
+            <div class="summary-status" id="summary-status"></div>
+
+            <!-- Quality breakdown bar -->
+            <div class="quality-section" id="quality-section" style="display:none;">
+                <div class="quality-title">Road Quality Breakdown</div>
+                <div class="quality-bar">
+                    <div class="qb-seg smooth" id="qb-smooth"></div>
+                    <div class="qb-seg shaded" id="qb-shaded"></div>
+                    <div class="qb-seg rough" id="qb-rough"></div>
+                </div>
+                <div class="quality-legend">
+                    <span><span class="qdot smooth"></span>Smooth <b id="ql-smooth">0</b>%</span>
+                    <span><span class="qdot shaded"></span>Shaded <b id="ql-shaded">0</b>%</span>
+                    <span><span class="qdot rough"></span>Issues <b id="ql-rough">0</b>%</span>
+                </div>
+            </div>
+
+            <!-- Alternative route buttons -->
+            <div id="alt-section" style="display:none;">
+                <div class="alt-label">Alternative Routes</div>
+                <div id="alt-list" class="alt-list"></div>
+            </div>
+        </div>
+
+        <!-- ── Legend card (bottom-right) ──────────────────────────────────── -->
+        <div class="float-card legend-card">
+            <div class="legend-row"><span class="lc-line main"></span><span>Main Route</span></div>
+            <div class="legend-row"><span class="lc-line alt1"></span><span>Alternative 1</span></div>
+            <div class="legend-row"><span class="lc-line alt2"></span><span>Alternative 2</span></div>
+            <div class="legend-divider"></div>
+            <div class="legend-row"><span class="lc-pin start"></span><span>Start</span></div>
+            <div class="legend-row"><span class="lc-pin end"></span><span>End</span></div>
+        </div>
+
+        <!-- Loading overlay -->
+        <div class="loading-overlay" id="loading-overlay" style="display:none;">
+            <div class="spinner"></div>
+            <span id="loading-text">Computing route via Bidirectional A*…</span>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="mapRenderer.js"></script>
+    <script src="app.js"></script>
 </body>
+
 </html>
