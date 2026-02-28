@@ -19,6 +19,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const qualSection = document.getElementById('quality-section');
     const altSection = document.getElementById('alt-section');
     const altList = document.getElementById('alt-list');
+    const summaryToggle = document.getElementById('summary-toggle');
+
+    // ── Summary panel collapse toggle (default: hidden until route found) ────
+    let summaryVisible = false;
+
+    summaryToggle.style.display = 'none'; // hide toggle until first route
+
+    summaryToggle.addEventListener('click', () => {
+        summaryVisible = !summaryVisible;
+        summaryCard.classList.toggle('collapsed', !summaryVisible);
+        summaryToggle.textContent = summaryVisible ? '📋 Summary ◀' : '📋 Summary ▶';
+        summaryToggle.classList.toggle('open', summaryVisible);
+    });
+
+    function showSummaryPanel() {
+        summaryCard.style.display = 'flex';
+        summaryToggle.style.display = 'flex';
+        summaryVisible = true;
+        summaryCard.classList.remove('collapsed');
+        summaryToggle.textContent = '📋 Summary ◀';
+        summaryToggle.classList.add('open');
+    }
 
     // ── Pre-select different default destinations ────────────────────────────
     dstSel.value = 'Eco Park';
@@ -104,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const km = (route.distanceMetres / 1000).toFixed(2);
         const statusEl = document.getElementById('summary-status');
         statusEl.innerHTML = `✅ <strong>${label || 'Main Route'}</strong> — <strong>${km} km</strong> • ~${route.estTimeMin} min`;
-        summaryCard.style.display = 'block';
+        showSummaryPanel();
     }
 
     // ── Road quality bar ──────────────────────────────────────────────────────
@@ -134,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         altList.appendChild(makeAltBtn('Main Route', '#2563EB', currentRoutes[0], 0));
 
         // Alt buttons
-        const colors = ['#f59e0b', '#10b981'];
+        const colors = ['#111111', '#b91c1c'];
         const labels = ['Alternative 1', 'Alternative 2'];
         alternatives.forEach((alt, idx) => {
             altList.appendChild(makeAltBtn(labels[idx] || `Alt ${idx + 1}`, colors[idx] || '#888', alt, idx + 1));

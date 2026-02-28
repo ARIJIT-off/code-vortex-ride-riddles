@@ -8,7 +8,7 @@
 'use strict';
 
 (() => {
-    const ROUTE_COLORS = ['#2563EB', '#f59e0b', '#10b981'];
+    const ROUTE_COLORS = ['#2563EB', '#111111', '#b91c1c'];
     const ROUTE_WEIGHTS = [6, 3.5, 3.5];
 
     // ── State ────────────────────────────────────────────────────────────────
@@ -45,8 +45,8 @@
         const emojis = { foot: '🚶', ev: '⚡🚗', '4-wheeler': '🚗', '2-wheeler': '🏍' };
         const e = emojis[mode] || '📍';
         return L.divIcon({
-            html: `<div style="font-size:26px;line-height:1;filter:drop-shadow(0 2px 5px #0009);transition:transform .1s">${e}</div>`,
-            className: '', iconSize: [36, 36], iconAnchor: [18, 18]
+            html: `<div style="font-size:42px;line-height:1;filter:drop-shadow(0 2px 5px #0009);transition:transform .1s">${e}</div>`,
+            className: '', iconSize: [50, 50], iconAnchor: [25, 25]
         });
     }
 
