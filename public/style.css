@@ -169,6 +169,58 @@ body {
     border: 1px solid var(--card-border);
     border-radius: 16px;
     box-shadow: var(--card-shadow);
+    overflow: hidden;
+    /* keeps rounded corners during collapse */
+}
+
+/* ── Collapsible card header ──────────────────────────────────────────────── */
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 1rem 1.1rem 0.9rem;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.card-header:hover {
+    border-bottom-color: var(--card-border);
+}
+
+.card-chevron {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    line-height: 1;
+    color: var(--text-2);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.25s cubic-bezier(.4, 0, .2, 1);
+    flex-shrink: 0;
+}
+
+/* ── Collapsible card body ───────────────────────────────────────────────── */
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.85rem 1.1rem 1.1rem;
+    max-height: 80vh;
+    overflow-y: auto;
+    transition: max-height 0.3s cubic-bezier(.4, 0, .2, 1),
+        opacity 0.25s ease,
+        padding 0.25s ease;
+}
+
+.card-body--collapsed {
+    max-height: 0 !important;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
 }
 
 /* Search card — top left */
@@ -176,25 +228,24 @@ body {
     top: 1rem;
     left: 1rem;
     width: 296px;
-    padding: 1.25rem;
+    padding: 0;
+    /* padding now on card-header / card-body */
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
 }
+
 
 /* Summary card — right side, collapsible */
 .summary-card {
     top: 1rem;
     right: 1rem;
     width: 310px;
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
-    padding: 1.1rem 1.25rem 1.25rem;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
+
 
 .summary-card.collapsed {
     opacity: 0;
@@ -871,5 +922,73 @@ select:focus {
 
     100% {
         opacity: 0.88;
+    }
+}
+
+/* ─── Mobile Responsive (≤ 640px) ───────────────────────────────────────── */
+@media (max-width: 640px) {
+
+    /* Cards go full-width, pinned to bottom */
+    .float-card {
+        border-radius: 16px 16px 0 0;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        top: auto !important;
+    }
+
+    /* Search card pins to bottom-left area */
+    .search-card {
+        bottom: 0;
+        z-index: 30;
+    }
+
+    /* Summary card pins above search card */
+    .summary-card {
+        bottom: 0;
+        z-index: 28;
+    }
+
+    /* Pathtype card pins just above summary */
+    .pathtype-card {
+        bottom: 0;
+        z-index: 26;
+        top: auto !important;
+    }
+
+    /* Limit card body scroll height on mobile */
+    .card-body {
+        max-height: 55vh;
+    }
+
+    /* Legend goes to top-right, compact */
+    .legend-card {
+        top: 0.5rem !important;
+        right: 0.5rem !important;
+        left: auto !important;
+        width: auto !important;
+        border-radius: 12px !important;
+        padding: 0.5rem 0.75rem;
+    }
+
+    /* Topbar compact */
+    .topbar-meta {
+        display: none;
+    }
+
+    .brand-name {
+        font-size: 0.95rem;
+    }
+
+    /* Alt buttons stack better on small screens */
+    .alt-btn {
+        font-size: 0.82rem;
+        padding: 0.6rem 0.75rem;
+    }
+
+    /* Summary card title smaller */
+    .summary-title {
+        font-size: 1rem;
     }
 }
