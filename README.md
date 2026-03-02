@@ -21,7 +21,7 @@ Make sure you have [Node.js](https://nodejs.org/) installed on your system.
 ### Step 1: Download the App
 1. Clone or download this repository to your local machine.
 2. Extract the folder if it's in a `.zip` file.
-3. Open a terminal or command prompt inside the extracted project folder (e.g., `antigravity ride riddles`).
+3. Open a terminal or command prompt inside the extracted project folder (e.g., `ride riddles`).
 
 ### Step 2: Install Dependencies
 In your terminal, run the following command to install the required Node.js packages (`express` and `cors`):
