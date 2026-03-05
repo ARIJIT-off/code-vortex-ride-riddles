@@ -18,8 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const pathtypeRows = document.getElementById('pathtype-rows');
     const trafficBadge = document.getElementById('traffic-badge');
 
-    dstSel.value = 'Eco Park';
-
     swapBtn.addEventListener('click', () => {
         const tmp = srcSel.value;
         srcSel.value = dstSel.value;
