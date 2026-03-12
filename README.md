@@ -1,5 +1,9 @@
 # Ride Riddles
-
+DEVELOPED BY ARIJIT PAL (CSE DATA SCIENCE)
+             PARIJAT PAL (CSE DATA SCIENCE)
+             PALLAV SAHA (ROBOTICS AND AI)
+             AYANTIKA CHAKRABORTY(CSIT) 
+             
 ## 📖 Project Description
 Ride Riddles is an intelligent, full-stack navigation web application designed specifically for Kolkata (New Town, Salt Lake, and Central). It calculates the optimal route between landmarks using live OpenStreetMap data and a custom **Bidirectional A\*** routing engine. 
 

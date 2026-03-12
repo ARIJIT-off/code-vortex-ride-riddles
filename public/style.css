@@ -6,8 +6,8 @@
     --accent: #06b6d4;
     --topbar-bg: #0f172a;
     --topbar-h: 52px;
-    --drawer-w: 300px;
-    --tab-w: 56px;
+    --drawer-w: 240px;
+    --tab-w: 65px;
     --card-bg: rgba(255, 255, 255, 0.96);
     --card-border: rgba(0, 0, 0, 0.08);
     --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
