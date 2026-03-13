@@ -18,6 +18,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const pathtypeRows = document.getElementById('pathtype-rows');
     const trafficBadge = document.getElementById('traffic-badge');
 
+    // ── Map Layer Toggles ──
+    const layerBtns = document.querySelectorAll('.layer-btn');
+    layerBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            layerBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const layerType = btn.getAttribute('data-layer');
+            if (window.MapRenderer && window.MapRenderer.setBaseLayer) {
+                window.MapRenderer.setBaseLayer(layerType);
+            }
+        });
+    });
+
     swapBtn.addEventListener('click', () => {
         const tmp = srcSel.value;
         srcSel.value = dstSel.value;

@@ -59,14 +59,33 @@
     }
 
     // ── Init ─────────────────────────────────────────────────────────────────
+    let currentTileLayer = null;
+    const baseLayers = {
+        street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors', maxZoom: 19
+        }),
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom: 19
+        }),
+        hybrid: L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+            attribution: '© Google Maps', maxZoom: 19
+        })
+    };
+
     function init() {
         if (map) return;
         map = L.map('map', { center: CENTER, zoom: 14, zoomControl: true });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19
-        }).addTo(map);
+        setBaseLayer('street');
         loadLandmarks();
+    }
+
+    function setBaseLayer(layerName) {
+        if (!map) return;
+        if (currentTileLayer) {
+            map.removeLayer(currentTileLayer);
+        }
+        currentTileLayer = baseLayers[layerName] || baseLayers.street;
+        currentTileLayer.addTo(map);
     }
 
     // ── Landmarks ────────────────────────────────────────────────────────────
@@ -248,7 +267,7 @@
     }
 
     // ── Expose API ────────────────────────────────────────────────────────────
-    window.MapRenderer = { init, loadLandmarks, showRoutes, clearRoutes, prefetchAllGeometry };
+    window.MapRenderer = { init, loadLandmarks, showRoutes, clearRoutes, prefetchAllGeometry, setBaseLayer };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
